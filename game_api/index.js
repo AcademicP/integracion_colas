@@ -1,5 +1,6 @@
 const express = require("express")
 const amqp = require("amqplib")
+const axios = require("axios")
 
 const app = express()
 app.use( express.json() )
@@ -7,6 +8,7 @@ const port = 8080
 app.get('/', (req, res) => { res.send("I am alive GameAPI"); })
 
 const exchange = 'bets_exchange';   
+
 const queue1m = 'bets_delayed_1m';
 const queue10m = 'bets_delayed_10m';
 const queue1h = 'bets_delayed_1h';
@@ -14,7 +16,7 @@ const queue1d = 'bets_delayed_1d';
 const finalQueue = 'bets';  
 
 async function connectRabbit(){
-  const conn= await amqp.connect("amqp://guest:guest@localhost");
+  const conn= await amqp.connect("amqp://game_api:game_api@localhost");
   const channel = await conn.createChannel();
   await channel.assertExchange(exchange, 'direct', { durable: true });  
 
@@ -68,13 +70,13 @@ async function connectRabbit(){
 app.post('/bet', async(req, res)=>{
   try {
     const channel= await connectRabbit();
-    console.log("Llego la apuesta", req.body, channel);
+    console.log("Llego la apuesta", req.body);
     //TODO: guardar en mi BD.
     let msg = req.body;
     msg.dateAt=new Date();
     //await chanel.sendToQueue("bets", Buffer.from(JSON.stringify(req.body)) )
     await channel.publish(exchange, 'bets_1m', Buffer.from(JSON.stringify(msg)));
-      
+    console.log("MEnsaje enviado a la cola bets_1");
     channel.close()
     //conn.close()
     return res.status(201).json({success:true});
@@ -91,9 +93,15 @@ app.listen(port, () => {
 
 /*--------------Queue Manager */
 async function consumirApuesta(){
-  const channel = await connectRabbit();
-  console.log("Conectado A Rabbit");
-  channel.consume("bets", function(msg){
+  
+  const conn= await amqp.connect("amqp://game_api:game_api@localhost");
+  const channel = await conn.createChannel();
+  //await channel.assertExchange(exchange, 'direct', { durable: true });  
+  //await channel.assertQueue("queue1m", { durable: true }); 
+  //await channel.bindQueue(queue, exchange, 'bets_key');     
+
+  console.log("Escuchando A Rabbit");
+  channel.consume(queue1m, function(msg){
     const bet = JSON.parse(msg.content.toString());
     console.log("APUESTA RECIBIDA",new Date(), bet);
     
