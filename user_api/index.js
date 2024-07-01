@@ -1,5 +1,4 @@
 const express = require("express")
-const amqp = require("amqplib")
 
 const app = express()
 app.use( express.json() )
@@ -11,27 +10,16 @@ const users = [
   {username:"usuario2", saldo:200},
 ];
 
-async function conectarRabbit(){
-  const conn = await amqp.connect("amqp://guest:guest@localhost");
-  const channel = await conn.createChannel();
-  await channel.assertQueue("bets", {durable:true});
-  return channel;
-}
-
-
-async function consumirApuesta(){
-  const channel = await conectarRabbit();
-  channel.consume("bets", function(msg){
-    const bet = JSON.parse(msg.content.toString());
-    console.log("APUESTA RECIBIDA",new Date(), bet);
-    const user = users.find(e=>e.username==bet.username);
-    if(user){ /* */  }
-    channel.ack(msg);
-  });
-}
-
-consumirApuesta();
 
 app.get("/users", function(req, res){
   res.json(users);
 });
+
+app.post("/users", function(req,res){
+  /* Codigo para quitar balance */
+  res.json({success:true});
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
