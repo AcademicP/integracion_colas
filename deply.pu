@@ -1,0 +1,29 @@
+@startuml
+
+node GAME_SOL{
+[GAME_API]
+
+component Cola_1min #ccc
+[Cola_10min]  #ccc
+[Cola_1h]  #ccc
+[Cola_1d] #ccc
+[GAME_API_CONSUMER]
+}
+node USERAPI_{
+[USER_API]
+}
+
+
+GAME_API --> Cola_1min:amqp
+Cola_1min->Cola_10min:amqp
+Cola_10min->Cola_1h:amqp
+Cola_1h->Cola_1d:amqp
+
+
+GAME_API_CONSUMER<-->Cola_1min:amqp
+GAME_API_CONSUMER<-->Cola_10min:amqp
+GAME_API_CONSUMER<-->Cola_1h:amqp
+GAME_API_CONSUMER<-->Cola_1d:amqp
+GAME_API_CONSUMER->USER_API:REST
+
+@enduml
