@@ -67,16 +67,16 @@ async function connectRabbit(){
 
 app.post('/bet', async(req, res)=>{
   try {
-    const channel= connectRabbit();
-    console.log("Llego la apuesta", req.body);
+    const channel= await connectRabbit();
+    console.log("Llego la apuesta", req.body, channel);
     //TODO: guardar en mi BD.
     let msg = req.body;
     msg.dateAt=new Date();
     //await chanel.sendToQueue("bets", Buffer.from(JSON.stringify(req.body)) )
-    await channel.publish(exchange, 'bets_1m', Buffer.from(JSON.stringify(apuesta)));
+    await channel.publish(exchange, 'bets_1m', Buffer.from(JSON.stringify(msg)));
       
-    chanel.close()
-    conn.close()
+    channel.close()
+    //conn.close()
     return res.status(201).json({success:true});
   } catch (error) {
     console.log('Error', error);
